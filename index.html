@@ -1,0 +1,1046 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Intracranial PCA component dashboard</title>
+<style>
+:root{--ink:#10243f;--muted:#52657f;--line:#d6e0ea;--blue:#164f86;--paper:#fff;--wash:#eef4fa;--member:#168f65;--partial:#d68b18;--outlier:#c44949}
+*{box-sizing:border-box}
+body{font-family:Georgia,"Times New Roman",serif;background:var(--wash);color:var(--ink);margin:0;padding:24px}
+.shell{max-width:1540px;margin:auto;background:var(--paper);border:1px solid var(--line);padding:28px;border-radius:22px;box-shadow:0 18px 50px rgba(30,59,92,.08)}
+h1{font-size:38px;margin:0 0 16px}
+.tabs,.controls,.link-row,.legend,.subtabs,.metric-help,.toggle-row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.tabs{margin-bottom:18px}
+.tab,.btn,.subtab{border:1px solid #afbdcc;background:#fff;color:var(--ink);font-family:Arial,Helvetica,sans-serif;font-size:16px;line-height:1.2;font-weight:700;padding:9px 13px;cursor:pointer;text-decoration:none}
+.tab.active,.subtab.active{background:var(--blue);color:#fff}
+.induction-btn{border:1px solid #9eb0c2;background:#fff;color:var(--ink);font:700 14px/1.2 Arial,sans-serif;padding:9px 12px;cursor:pointer}
+.induction-btn.active{background:#0f5b99;border-color:#0f5b99;color:#fff}
+.induction-controls{display:flex;gap:10px;flex-wrap:wrap;align-items:center;padding:14px;border:1px solid var(--line);background:#f8fbfe;margin-bottom:14px}
+[hidden]{display:none!important}
+.induction-controls[hidden]{display:none}
+.induction-title{font:700 15px Arial,sans-serif;margin-right:4px}
+.induction-note{flex-basis:100%;font:12px/1.45 Arial,sans-serif;color:var(--muted)}
+.panel{display:none}
+.panel.active{display:block}
+.controls{padding:14px;border:1px solid var(--line);background:#f8fbfe;margin-bottom:14px}
+.controls label{font-weight:700}
+.controls select{min-width:210px;padding:8px;background:#fff;border:1px solid #aebccc}
+.threshold{flex:1;min-width:280px}
+.threshold input{width:100%}
+.card{border:1px solid var(--line);padding:16px;background:#fff;margin-top:14px}
+.card h2{margin:0 0 8px;font-size:26px}
+.muted{color:var(--muted);font-family:Arial,sans-serif}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:8px;margin:12px 0}
+.stat{border:1px solid var(--line);padding:10px;background:#fafcff}
+.stat b{display:block;font:12px Arial;color:var(--muted);text-transform:uppercase}
+.stat span{font:700 18px Arial}
+.stat small{display:block;margin-top:6px;font:12px/1.35 Arial;color:var(--muted)}
+.legend{font:700 13px Arial;margin:10px 0}
+.legend:empty{display:none}
+.chip{display:inline-flex;align-items:center;gap:7px;border:1px solid var(--line);padding:6px 9px;background:#fff}
+.swatch{display:inline-block;width:11px;height:11px;border-radius:2px}
+.plot-host{width:100%;min-height:0;position:relative}
+.embedding-empty{padding:30px;border:1px dashed #afbdcc;background:#fbfdff;color:var(--muted);font:15px/1.5 Arial,sans-serif}
+.embedding-figure{display:flex;flex-direction:column;gap:14px}
+.embedding-legend-row{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.embedding-legend-chip{display:inline-flex;gap:7px;align-items:center;padding:6px 10px;border:1px solid var(--line);background:#fafcff;font:12px/1.3 Arial,sans-serif}
+.embedding-legend-note{font:12px/1.45 Arial,sans-serif;color:var(--muted)}
+.embedding-colorbar{display:flex;flex-direction:column;gap:6px}
+.embedding-colorbar-bar{height:12px;border-radius:999px;border:1px solid var(--line);background:linear-gradient(90deg,#30123b 0%,#4145ab 16%,#2c7ef7 33%,#1fb9b8 50%,#73d055 67%,#fde725 84%,#f97b1d 100%)}
+.embedding-colorbar-labels{display:flex;justify-content:space-between;font:12px Arial,sans-serif;color:var(--muted)}
+.embedding-panel-card{border:1px solid var(--line);background:#fff;padding:10px;display:flex;flex-direction:column;min-height:560px}
+.embedding-panel-heading{margin:0 0 8px;font:700 16px/1.2 Arial,sans-serif;color:var(--ink)}
+.embedding-plot-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(440px,1fr));gap:14px}
+.embedding-svg{display:block;width:100%;height:520px;min-height:520px;background:#fff;flex:1 1 auto}
+.embedding-axis-title{font:700 13px Arial;fill:#10243f}
+.embedding-zero-line{stroke:#94a3b8;stroke-width:1;stroke-dasharray:5 4}
+.embedding-canvas-shell{border:1px solid var(--line);background:linear-gradient(180deg,#fbfdff 0%,#f3f8fd 100%);padding:12px}
+.embedding-toolbar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;justify-content:space-between;margin-bottom:10px}
+.embedding-toolbar-actions{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.embedding-view-btn{border:1px solid var(--line);background:#fff;color:var(--ink);font:700 12px Arial;padding:7px 10px;cursor:pointer}
+.embedding-view-btn:hover{background:#eef4fa}
+.embedding-canvas-hint,.metric-help{font:12px/1.5 Arial,sans-serif;color:var(--muted)}
+.embedding-canvas-wrap{position:relative}
+.embedding-canvas{display:block;width:100%;height:760px;background:#fff;border:1px solid var(--line);cursor:grab}
+.embedding-canvas.dragging{cursor:grabbing}
+.embedding-canvas-footer{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-top:10px;font:12px/1.45 Arial,sans-serif;color:var(--muted)}
+.toggle-row label{display:inline-flex;align-items:center;gap:6px;font:700 14px Arial,sans-serif}
+.toggle-row input{width:16px;height:16px}
+.metric-help{margin:0 0 8px}
+svg{display:block;width:100%;height:auto;background:#fff}
+.axis{stroke:#14263d;stroke-width:1.35}
+.grid{stroke:#e6ecf2;stroke-width:1}
+.tick{font:12px Arial;fill:#334155}
+.axis-label{font:700 14px Arial;fill:#10243f}
+.bar-segment{cursor:pointer}
+.bar-outline{fill:none;stroke:#12263f;stroke-width:1.1}
+.hist-curve{fill:none;stroke:#12263f;stroke-width:2.2}
+.hist-stat-line{stroke:#334155;stroke-width:1.35;stroke-dasharray:7 5}
+.hist-stat-label{font:700 12px Arial;fill:#334155}
+.electrode-line{fill:none;stroke-width:1.1;opacity:.42;pointer-events:none;transition:stroke-width .12s ease,opacity .12s ease}
+.electrode-line.hovered{stroke-width:3.2;opacity:1}
+.trajectory-hit{fill:none;stroke:transparent;stroke-width:14;pointer-events:stroke;cursor:crosshair}
+.trajectory-hover-info{margin:12px 0 4px;padding:12px 14px;border:1px solid #bfd0df;border-left:5px solid #209969;background:#f7fbf9;min-height:64px;font:13px/1.45 Arial,sans-serif;color:var(--ink)}
+.trajectory-hover-info strong{display:block;margin-bottom:6px;font:700 15px/1.25 Arial,sans-serif}
+.trajectory-hover-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:5px 16px}
+.trajectory-hover-grid span{overflow-wrap:anywhere}
+.mean-line{fill:none;stroke:#111827;stroke-width:3}
+.pc1-line,.pc2-line,.pc3-line{fill:none;stroke-width:5;stroke-linecap:round;opacity:1}
+.pc1-line{stroke:#e24a33}
+.pc2-line{stroke:#6d28d9}
+.pc3-line{stroke:#db2777;stroke-dasharray:12 7}
+.cohort-pca-line{fill:none;stroke-width:2.6;opacity:.78;cursor:pointer}
+.event-line{stroke:#334155;stroke-width:1.4;stroke-dasharray:6 5}
+.tooltip{position:fixed;pointer-events:none;opacity:0;background:#101827;color:#fff;padding:10px;max-width:390px;font:12px Arial;line-height:1.45;z-index:20}
+.corr-image{display:block;width:100%;height:auto;max-height:calc(100vh - 240px);object-fit:contain;pointer-events:none}
+.scroll{overflow:auto}
+.empty-note{padding:20px;background:#f8fbfe;border:1px solid var(--line)}
+@media(max-width:900px){body{padding:10px}.shell{padding:16px}h1{font-size:30px}.embedding-canvas{height:620px}}
+</style><script src="plotly.min.js"></script></head><body><main class="shell"><h1>Dashboard</h1>
+<div class="tabs"><button class="tab active" data-tab="distribution">Timing distributions</button><button class="tab" data-tab="trajectories">Patient trajectories + PCA</button><button class="tab" data-tab="embedding">PCA Embedding</button><button class="tab" data-tab="correlations">Correlations</button><a class="btn" href="brain_delta_plateau_timing_map.html">Cohort brain map</a></div>
+<div class="controls" id="thresholdControls"><label>Concordance threshold <span id="thresholdLabel">0%</span></label><div class="threshold"><input id="threshold" type="range" min="0" max="100" value="0" step="1"></div></div>
+<div class="induction-controls" id="inductionControls" hidden><span class="induction-title">Induction-rate cohort</span><button type="button" class="induction-btn" data-induction-mode="rate_05">0.5 mcg/kg/min only</button><button type="button" class="induction-btn" data-induction-mode="rate_10">1.0 mcg/kg/min only</button><button type="button" class="induction-btn active" data-induction-mode="normalized_combined">Combined, normalized to 1.0</button><span class="induction-note" id="inductionNote"></span></div>
+<section id="distributionPanel" class="panel active"><div class="controls"><label>View</label><select id="histView"></select><label>Band</label><select id="histBand"><option>delta</option><option>beta</option><option>gamma</option></select><label>Bin width</label><input id="binWidth" type="range" min="1" max="30" value="5" step=".5"><span id="binLabel"></span></div><div class="card"><h2 id="histTitle"></h2><div class="legend" id="histLegend"></div><div class="stats" id="histStats"></div><svg id="histSvg" viewBox="0 0 1280 650"></svg></div></section>
+<section id="trajectoriesPanel" class="panel"><div class="controls"><label>Patient</label><select id="trajPatient"></select><label>Band</label><select id="trajBand"><option>delta</option><option>beta</option><option>gamma</option></select><div class="subtabs" id="channelGroupTabs"><button type="button" class="subtab active" data-group="mixed">Mixed</button><button type="button" class="subtab" data-group="implanted">Implanted</button><button type="button" class="subtab" data-group="scalp">Scalp</button></div><label><input id="extendedWindow" type="checkbox"> Extended PCA window</label><div class="toggle-row"><label><input id="showMean" type="checkbox" checked> Mean</label><label><input id="showPc1" type="checkbox" checked> PC1</label><label><input id="showPc2" type="checkbox"> PC2</label><label><input id="showPc3" type="checkbox"> PC3</label></div></div><div class="card"><h2 id="trajTitle"></h2><p class="muted" id="trajSubtitle"></p><div class="legend" id="trajLegend"></div><div id="trajHoverInfo" class="trajectory-hover-info" aria-live="polite"><strong>Electrode information</strong><span>Hover over an electrode trajectory to display its identity, localization, and PCA metrics here.</span></div><svg id="trajSvg" viewBox="0 0 1280 680"></svg></div></section>
+<section id="embeddingPanel" class="panel"><div class="controls"><label>Patient scope</label><select id="embedPatient"></select><label>Band</label><select id="embedBand"><option>delta</option><option>beta</option><option>gamma</option></select><div class="subtabs" id="embedChannelGroupTabs"><button type="button" class="subtab active" data-group="mixed">Mixed</button><button type="button" class="subtab" data-group="implanted">Implanted</button><button type="button" class="subtab" data-group="scalp">Scalp</button></div><label>PCA window</label><div class="subtabs" id="embedTimeModeTabs"><button type="button" class="subtab active" data-mode="analysis_window">Standard PCA window</button><button type="button" class="subtab" data-mode="full_recording">Full recording PCA</button></div><label>Color by</label><select id="embedColorBy"></select><label>Point size</label><select id="embedSizeBy"></select><div class="toggle-row"><label><input id="embedShowPc1" type="checkbox" checked> PC1</label><label><input id="embedShowPc2" type="checkbox" checked> PC2</label><label><input id="embedShowPc3" type="checkbox" checked> PC3</label></div></div><div class="card"><h2 id="embedTitle"></h2><p class="muted" id="embedSubtitle"></p><div class="stats" id="embedStats"></div><p id="embedMetricHelp" class="metric-help"></p><div id="embeddingEmpty" class="embedding-empty" style="display:none"></div><div id="embeddingPlot" class="plot-host"></div></div></section>
+<section id="correlationsPanel" class="panel"><div class="card"><h2>Correlations</h2><div class="scroll"><div class="correlation-variant" data-induction-mode="rate_05" hidden><img class="corr-image" src="intracranial_correlation_grid_rate_05.svg" alt="Intracranial correlation grid - 0.5 mcg/kg/min"></div><div class="correlation-variant" data-induction-mode="rate_10" hidden><img class="corr-image" src="intracranial_correlation_grid_rate_10.svg" alt="Intracranial correlation grid - 1.0 mcg/kg/min"></div><div class="correlation-variant" data-induction-mode="normalized_combined"><img class="corr-image" src="intracranial_correlation_grid.svg" alt="Intracranial correlation grid - Combined, normalized to 1.0"></div></div></div></section>
+</main><div id="tooltip" class="tooltip"></div><script>
+</script>
+<script src="assets/dashboard-data.js"></script>
+<script src="assets/trajectories/p1001-01.js"></script>
+<script src="assets/trajectories/p1002-01.js"></script>
+<script src="assets/trajectories/p1003-01.js"></script>
+<script src="assets/trajectories/p1004-01.js"></script>
+<script src="assets/trajectories/p1005-01.js"></script>
+<script src="assets/trajectories/p1006-01.js"></script>
+<script src="assets/trajectories/p1007-01.js"></script>
+<script src="assets/trajectories/p1008-01.js"></script>
+<script src="assets/trajectories/p1009-01.js"></script>
+<script src="assets/trajectories/p1010-01.js"></script>
+<script src="assets/trajectories/p1011-01.js"></script>
+<script src="assets/trajectories/p1012-01.js"></script>
+<script src="assets/trajectories/p1013-01.js"></script>
+<script src="assets/trajectories/p1014-01.js"></script>
+<script src="assets/trajectories/p1015-01.js"></script>
+<script src="assets/trajectories/p1016-01.js"></script>
+<script src="assets/trajectories/p1017-01.js"></script>
+<script src="assets/trajectories/p1018-01.js"></script>
+<script src="assets/trajectories/p1019-01.js"></script>
+<script src="assets/trajectories/p1020-01.js"></script>
+<script src="assets/trajectories/p1021-01.js"></script>
+<script>
+const entries=window.__DASHBOARD_ENTRIES__;
+const trajectories=window.__DASHBOARD_TRAJECTORIES__;
+const embeddingRows=window.__DASHBOARD_EMBEDDING_ROWS__;
+const classOrder=[["component_member", "Component member", "#168F65"], ["component_partial_member", "Component partial member", "#D68B18"], ["component_outlier", "Component outlier", "#C44949"]];
+const $=id=>document.getElementById(id);
+const tooltip=$('tooltip');
+let threshold=0;
+let activeDashboardTab='distribution';
+let inductionMode='normalized_combined';
+let activeChannelGroup='mixed';
+let embedChannelGroup='mixed';
+let embedTimeMode='analysis_window';
+const inductionRate05Patients=new Set(['P1001','P1002','P1003','P1004','P1005','P1006','P1007','P1008']);
+const categoricalEmbeddingMetrics=new Set(['anatomical_region','patient_id','hemisphere','dominant_component']);
+const embeddingColorOptions=[['anatomical_region','Anatomical region'],['patient_id','Patient'],['hemisphere','Hemisphere'],['dominant_component','Dominant component'],['component_concordance_score','PCA concordance score'],['reconstruction_corr','Reconstruction correlation'],['delta_lag_sec','Delta lag'],['beta_lag_sec','Beta lag'],['gamma_lag_sec','Gamma lag'],['object_drop_relative_timing_sec','Object-drop-relative timing']];
+const embeddingSizeOptions=[['uniform','Uniform'],['component_concordance_score','PCA concordance score'],['reconstruction_corr','Reconstruction correlation'],['dominant_component_weight','Dominant component weight']];
+const embeddingPalette=['#2563eb','#16a34a','#dc2626','#d97706','#7c3aed','#db2777','#0f766e','#4f46e5','#b45309','#059669','#c026d3','#475569','#f43f5e','#65a30d','#0891b2','#ea580c','#3b82f6','#14b8a6','#9333ea','#be123c','#a16207','#0ea5e9','#10b981','#ef4444'];
+const embeddingColorHelp={
+  anatomical_region:'Colors each point by the atlas/localization region attached to that electrode.',
+  patient_id:'Colors each point by patient of origin.',
+  hemisphere:'Colors each point by hemisphere label.',
+  dominant_component:'Colors each point by the retained PCA component with the largest membership weight for that electrode.',
+  component_concordance_score:'Uses a continuous scale for component_concordance_score = max(0, reconstruction correlation) × dominant component weight.',
+  reconstruction_corr:'Uses a continuous scale for the correlation between the electrode trajectory and its PCA reconstruction.',
+  delta_lag_sec:'Uses a continuous scale for delta plateau lag relative to object drop.',
+  beta_lag_sec:'Uses a continuous scale for beta nadir lag relative to object drop.',
+  gamma_lag_sec:'Uses a continuous scale for gamma nadir lag relative to object drop.',
+  object_drop_relative_timing_sec:'Uses a continuous scale for the active timing lag of the selected band relative to object drop.'
+};
+const embeddingSizeHelp={
+  uniform:'Every included point uses the same radius.',
+  component_concordance_score:'Larger points have higher component_concordance_score after robust size normalization.',
+  reconstruction_corr:'Larger points have stronger electrode-to-reconstruction correlation after robust size normalization.',
+  dominant_component_weight:'Larger points have a stronger membership weight in their dominant retained PCA component after robust size normalization.'
+};
+function esc(v){return String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
+function fmt(v,d=1){return Number.isFinite(Number(v))?Number(v).toFixed(d).replace(/\.0$/,''):'NA'}
+function svgEl(svg,tag,attrs){const el=document.createElementNS('http://www.w3.org/2000/svg',tag);Object.entries(attrs).forEach(([key,val])=>el.setAttribute(key,val));svg.appendChild(el);return el}
+function clear(svg){while(svg.firstChild)svg.removeChild(svg.firstChild)}
+function showTip(evt,title,lines){tooltip.innerHTML=(title?'<b>'+esc(title)+'</b>':'')+lines.map(x=>'<div>'+x+'</div>').join('');tooltip.style.left=Math.min(evt.clientX+14,window.innerWidth-410)+'px';tooltip.style.top=Math.min(evt.clientY+14,window.innerHeight-220)+'px';tooltip.style.opacity=1}
+function hideTip(){tooltip.style.opacity=0}
+function sortedUnique(values){return [...new Set(values.map(v=>String(v??'').trim()).filter(Boolean))].sort((a,b)=>a.localeCompare(b,undefined,{numeric:true,sensitivity:'base'}))}
+function optionLabel(defs,key){const hit=defs.find(item=>item[0]===key);return hit?hit[1]:key}
+function populateMetricSelect(selectId,defs,selectedValue){const select=$(selectId);defs.forEach(([value,label])=>{const option=document.createElement('option');option.value=value;option.textContent=label;select.appendChild(option)});if(selectedValue)select.value=selectedValue}
+function numberArray(values){return (values||[]).map(v=>v===null?NaN:Number(v))}
+function inductionRate(patientId){return inductionRate05Patients.has(String(patientId||''))?.5:1}
+function patientMatchesInductionMode(patientId){const rate=inductionRate(patientId);return inductionMode==='rate_05'?rate===.5:inductionMode==='rate_10'?rate===1:true}
+function cohortTimeValue(value,patientId){const parsed=Number(value);if(!Number.isFinite(parsed))return NaN;return inductionMode==='normalized_combined'?parsed*inductionRate(patientId):parsed}
+function cohortTimeArray(values,patientId){return numberArray(values).map(value=>cohortTimeValue(value,patientId))}
+function isMultiPatientContext(){
+  if(activeDashboardTab==='correlations')return true;
+  if(activeDashboardTab==='distribution')return activeEntry()?.view_type==='region';
+  if(activeDashboardTab==='trajectories')return $('trajPatient').value==='__all__';
+  if(activeDashboardTab==='embedding')return $('embedPatient').value==='__all__';
+  return false;
+}
+function updateContextControls(){
+  const thresholdNeeded=activeDashboardTab==='distribution'||activeDashboardTab==='embedding'||(activeDashboardTab==='trajectories'&&$('trajPatient').value!=='__all__');
+  $('thresholdControls').hidden=!thresholdNeeded;
+  const multi=isMultiPatientContext();
+  $('inductionControls').hidden=!multi;
+  if(multi){
+    const normalized=inductionMode==='normalized_combined';
+    $('inductionNote').textContent=normalized
+      ?'Exploratory 1.0-equivalent clock: temporal values from 0.5 patients are multiplied by 0.5. PSD amplitudes and PCA coordinates are unchanged.'
+      :'Patients are filtered by recorded propofol induction rate; displayed temporal values remain in recorded seconds.';
+  }
+  document.querySelectorAll('.correlation-variant').forEach(node=>node.hidden=node.dataset.inductionMode!==inductionMode);
+}
+function setInductionMode(mode){
+  inductionMode=mode;
+  document.querySelectorAll('.induction-btn').forEach(btn=>btn.classList.toggle('active',btn.dataset.inductionMode===mode));
+  updateContextControls();
+  redraw();
+}
+function histStat(label,value,explanation){return '<div class="stat"><b>'+label+'</b><span>'+value+'</span>'+(explanation?'<small>'+explanation+'</small>':'')+'</div>'}
+function pointLabel(point){const region=String(point.region||'localisation unavailable').trim()||'localisation unavailable';return esc(point.member_name)+' — '+esc(region)}
+function pathD(xs,ys,xScale,yScale){let d='';let open=false;for(let i=0;i<Math.min(xs.length,ys.length);i++){const xValue=Number(xs[i]);const yValue=Number(ys[i]);if(Number.isFinite(xValue)&&Number.isFinite(yValue)){d+=(open?' L':'M')+xScale(xValue)+' '+yScale(yValue);open=true}else{open=false}}return d}
+function groupLabel(value){return ({mixed:'mixed scalp + implanted',implanted:'implanted channels only',scalp:'scalp/extracerebral channels only'}[value]||value)}
+function timeModeLabel(value){return value==='full_recording'?'full recording PCA':'standard PCA window'}
+function activeTimeMode(){return $('extendedWindow').checked?'full_recording':'analysis_window'}
+function resetTrajectoryInfo(message='Hover over an electrode trajectory to display its identity, localization, and PCA metrics here.'){
+  $('trajHoverInfo').innerHTML='<strong>Electrode information</strong><span>'+esc(message)+'</span>';
+}
+function showTrajectoryInfo(entry,point){
+  const region=String(point.region||'').trim()||'N/A';
+  const name=String(point.electrode_name||'').trim()||'N/A';
+  $('trajHoverInfo').innerHTML='<strong>'+esc(name)+'</strong><div class="trajectory-hover-grid">'
+    +'<span><b>Patient:</b> '+esc(entry.patient_id)+'</span>'
+    +'<span><b>Anatomical region:</b> '+esc(region)+'</span>'
+    +'<span><b>Channel group:</b> '+esc(groupLabel(activeChannelGroup))+'</span>'
+    +'<span><b>Dominant component:</b> PC'+esc(point.dominant_component||'N/A')+'</span>'
+    +'<span><b>PCA membership:</b> '+esc(point.member_component_list||'none')+'</span>'
+    +'<span><b>Reconstruction r:</b> '+fmt(point.reconstruction_corr,3)+'</span>'
+    +'<span><b>PCA concordance score:</b> '+fmt(Number(point.component_concordance_score)*100)+'%</span>'
+    +'</div>';
+}
+function embeddingPanelIsActive(){return $('embeddingPanel').classList.contains('active')}
+function scheduleEmbeddingRender(){requestAnimationFrame(renderEmbeddingPlot)}
+function activeEntry(){const [type,...rest]=$('histView').value.split(':');const name=rest.join(':');return entries.find(entry=>entry.view_type===type&&entry.view_name===name&&entry.band===$('histBand').value)}
+function inductionEligiblePoints(entry){
+  const points=entry?.points||[];
+  if(entry?.view_type!=='region')return points;
+  return points.filter(point=>patientMatchesInductionMode(point.patient_id)).map(point=>({...point,value:cohortTimeValue(point.value,point.patient_id)}));
+}
+function filteredPoints(entry){return inductionEligiblePoints(entry).filter(point=>Number(point.score)*100>=threshold)}
+function statusLabel(status){const hit=classOrder.find(item=>item[0]===status);return hit?hit[1]:'Component outlier'}
+function statusColor(status){const hit=classOrder.find(item=>item[0]===status);return hit?hit[2]:'#c44949'}
+function gaussianPath(values,mean,stdev,binWidth,xScale,yScale){if(!values.length||!Number.isFinite(mean)||!Number.isFinite(stdev)||stdev<=0)return '';const minX=Math.min(...values);const maxX=Math.max(...values);const span=Math.max(maxX-minX,1);const start=minX-0.05*span;const end=maxX+0.05*span;const n=96;let d='';for(let i=0;i<n;i++){const x=start+(end-start)*i/(n-1);const pdf=(1/(stdev*Math.sqrt(2*Math.PI)))*Math.exp(-0.5*((x-mean)/stdev)**2);const y=pdf*values.length*binWidth;d+=(i===0?'M':' L')+xScale(x)+' '+yScale(y)}return d}
+function drawHist(){
+  const entry=activeEntry();
+  if(!entry)return;
+  const points=filteredPoints(entry);
+  $('histTitle').textContent=entry.title;
+  const legendBits=classOrder.map(([status,label,color])=>{
+    const count=points.filter(point=>point.status===status).length;
+    return count?'<span class="chip"><span class="swatch" style="background:'+color+'"></span>'+label+' n='+count+'</span>':'';
+  }).filter(Boolean);
+  $('histLegend').innerHTML=legendBits.join('');
+  const values=points.map(point=>Number(point.value)).filter(Number.isFinite);
+  const mean=values.length?values.reduce((acc,value)=>acc+value,0)/values.length:NaN;
+  const sorted=[...values].sort((a,b)=>a-b);
+  const median=sorted.length?(sorted.length%2?sorted[(sorted.length-1)/2]:(sorted[sorted.length/2-1]+sorted[sorted.length/2])/2):NaN;
+  const stdev=values.length>1?Math.sqrt(values.reduce((acc,value)=>acc+(value-mean)*(value-mean),0)/(values.length-1)):NaN;
+  const rateEligible=inductionEligiblePoints(entry);
+  const excluded=Math.max(0,rateEligible.length-points.length);
+  $('histStats').innerHTML=[
+    histStat('Included',points.length,'Finite timing points whose PCA concordance score is at or above the selected threshold.'),
+    histStat('Excluded by threshold',excluded,'Finite timing points hidden only because their PCA concordance score is below the selected threshold.'),
+    histStat('Mean lag',fmt(mean)+' s','Arithmetic mean of the displayed timing values.'),
+    histStat('Median lag',fmt(median)+' s','Median of the displayed timing values.')
+  ].join('');
+  const svg=$('histSvg');
+  clear(svg);
+  const m={l:90,r:36,t:28,b:84};
+  const width=1280;
+  const height=650;
+  const plotWidth=width-m.l-m.r;
+  const plotHeight=height-m.t-m.b;
+  let lo=values.length?Math.min(...values):Number(entry.x_min);
+  let hi=values.length?Math.max(...values):Number(entry.x_max);
+  if(!Number.isFinite(lo)||!Number.isFinite(hi)||hi<=lo){
+    if(values.length){lo=Math.min(...values)-1;hi=Math.max(...values)+1}else{lo=-1;hi=1}
+  }
+  const binWidth=Math.max(0.5,Number($('binWidth').value)||5);
+  $('binLabel').textContent=fmt(binWidth)+' s';
+  const nBins=Math.max(1,Math.ceil((hi-lo)/binWidth));
+  const bins=Array.from({length:nBins},(_,index)=>({lo:lo+index*binWidth,hi:index===nBins-1?hi:lo+(index+1)*binWidth,points:[]}));
+  points.forEach(point=>{
+    let index=point.value===hi?nBins-1:Math.floor((point.value-lo)/binWidth);
+    index=Math.max(0,Math.min(nBins-1,index));
+    bins[index].points.push(point);
+  });
+  const yMax=Math.max(3,...bins.map(bin=>bin.points.length))+1;
+  const xScale=value=>m.l+(value-lo)/(hi-lo)*plotWidth;
+  const yScale=value=>m.t+plotHeight-(value/yMax)*plotHeight;
+  for(let i=0;i<=6;i++){
+    const yValue=i/6*yMax;
+    svgEl(svg,'line',{x1:m.l,x2:m.l+plotWidth,y1:yScale(yValue),y2:yScale(yValue),class:'grid'});
+    const label=svgEl(svg,'text',{x:m.l-10,y:yScale(yValue)+4,'text-anchor':'end',class:'tick'});
+    label.textContent=Math.round(yValue);
+  }
+  for(let i=0;i<=7;i++){
+    const xValue=lo+i/7*(hi-lo);
+    svgEl(svg,'line',{x1:xScale(xValue),x2:xScale(xValue),y1:m.t,y2:m.t+plotHeight,class:'grid'});
+    const label=svgEl(svg,'text',{x:xScale(xValue),y:m.t+plotHeight+24,'text-anchor':'middle',class:'tick'});
+    label.textContent=fmt(xValue);
+  }
+  svgEl(svg,'line',{x1:m.l,x2:m.l+plotWidth,y1:m.t+plotHeight,y2:m.t+plotHeight,class:'axis'});
+  svgEl(svg,'line',{x1:m.l,x2:m.l,y1:m.t,y2:m.t+plotHeight,class:'axis'});
+  bins.forEach(bin=>{
+    if(!bin.points.length)return;
+    const x0=xScale(bin.lo)+1;
+    const x1=xScale(bin.hi)-1;
+    const barWidth=Math.max(2,x1-x0);
+    let cumulative=0;
+    classOrder.forEach(([status])=>{
+      const segmentPoints=bin.points.filter(point=>point.status===status);
+      if(!segmentPoints.length)return;
+      const y=yScale(cumulative+segmentPoints.length);
+      const segHeight=yScale(cumulative)-yScale(cumulative+segmentPoints.length);
+      const rect=svgEl(svg,'rect',{x:x0,y:y,width:barWidth,height:segHeight,fill:statusColor(status),class:'bar-segment'});
+      rect.onmousemove=evt=>showTip(evt,'',segmentPoints.map(pointLabel));
+      rect.onmouseleave=hideTip;
+      cumulative+=segmentPoints.length;
+    });
+    svgEl(svg,'rect',{x:x0,y:yScale(bin.points.length),width:barWidth,height:yScale(0)-yScale(bin.points.length),class:'bar-outline'});
+  });
+  const curveD=gaussianPath(values,mean,stdev,binWidth,xScale,yScale);
+  if(curveD){svgEl(svg,'path',{d:curveD,class:'hist-curve'})}
+  if(Number.isFinite(mean)){const x=xScale(mean);svgEl(svg,'line',{x1:x,x2:x,y1:m.t,y2:m.t+plotHeight,class:'hist-stat-line'});const label=svgEl(svg,'text',{x:x+6,y:m.t+16,class:'hist-stat-label'});label.textContent='Mean'}
+  if(Number.isFinite(median)){const x=xScale(median);svgEl(svg,'line',{x1:x,x2:x,y1:m.t,y2:m.t+plotHeight,class:'hist-stat-line'});const label=svgEl(svg,'text',{x:x+6,y:m.t+32,class:'hist-stat-label'});label.textContent='Median'}
+  const xAxisLabelMap={delta:'Delta plateau lag relative to object drop (s)',beta:'Beta nadir lag relative to object drop (s)',gamma:'Gamma nadir lag relative to object drop (s)'};
+  const xLabel=svgEl(svg,'text',{x:m.l+plotWidth/2,y:height-18,'text-anchor':'middle',class:'axis-label'});
+  xLabel.textContent=xAxisLabelMap[entry.band]||'Seconds relative to object drop (s)';
+  const yLabel=svgEl(svg,'text',{x:26,y:m.t+plotHeight/2,transform:'rotate(-90 26 '+(m.t+plotHeight/2)+')','text-anchor':'middle',class:'axis-label'});
+  yLabel.textContent=entry.member_label==='Patients'?'Number of patients':'Number of electrodes';
+}
+function drawTraj(){
+  resetTrajectoryInfo();
+  const wantedMode=activeTimeMode();
+  if($('trajPatient').value==='__all__'){
+    resetTrajectoryInfo('The all-patient overlay displays cohort component trajectories rather than individual electrode trajectories.');
+    drawCohortTraj(wantedMode);
+    return;
+  }
+  const entry=trajectories.find(row=>row.patient_id===$('trajPatient').value&&row.band===$('trajBand').value&&(row.channel_group||'mixed')===activeChannelGroup&&(row.pca_time_mode||'analysis_window')===wantedMode);
+  const svg=$('trajSvg');
+  clear(svg);
+  if(!entry||!entry.time_relative_to_object_drop_sec||entry.time_relative_to_object_drop_sec.length<2){
+    $('trajTitle').textContent=($('trajPatient').value||'Patient')+' - '+$('trajBand').value+' - '+groupLabel(activeChannelGroup)+' PCA unavailable';
+    $('trajSubtitle').textContent='This patient-band-group-window combination has insufficient valid electrodes or time points for PCA.';
+    $('trajLegend').innerHTML='';
+    return;
+  }
+  const m={l:80,r:35,t:30,b:75},w=1280-m.l-m.r,h=680-m.t-m.b;
+  const x=numberArray(entry.time_relative_to_object_drop_sec);
+  const memberElectrodes=entry.electrodes.filter(point=>point.component_concordance_status==='component_member');
+  const electrodeTimes=memberElectrodes.flatMap(point=>numberArray(point.time_relative_to_object_drop_sec)).filter(Number.isFinite);
+  const valid=electrodeTimes.length?electrodeTimes:x.filter(Number.isFinite);
+  if(valid.length<2){
+    $('trajTitle').textContent=entry.patient_id+' - '+entry.band+' - '+groupLabel(activeChannelGroup)+' PCA unavailable';
+    $('trajSubtitle').textContent='No object-drop-relative component-member electrode recording range is available.';
+    $('trajLegend').innerHTML='';
+    return;
+  }
+  const lo=Math.min(...valid);
+  const hi=Math.max(...valid);
+  const xScale=value=>m.l+(value-lo)/(hi-lo)*w;
+  const yScale=value=>m.t+h-Math.max(0,Math.min(1,value))*h;
+  for(let i=0;i<=5;i++){
+    const yValue=i/5;
+    svgEl(svg,'line',{x1:m.l,x2:m.l+w,y1:yScale(yValue),y2:yScale(yValue),class:'grid'});
+    const label=svgEl(svg,'text',{x:m.l-9,y:yScale(yValue)+4,'text-anchor':'end',class:'tick'});
+    label.textContent=yValue.toFixed(1);
+  }
+  for(let i=0;i<=7;i++){
+    const xValue=lo+i/7*(hi-lo);
+    svgEl(svg,'line',{x1:xScale(xValue),x2:xScale(xValue),y1:m.t,y2:m.t+h,class:'grid'});
+    const label=svgEl(svg,'text',{x:xScale(xValue),y:m.t+h+22,'text-anchor':'middle',class:'tick'});
+    label.textContent=fmt(xValue);
+  }
+  const prop=Number(entry.propofol_start_sec)-Number(entry.object_drop_sec);
+  [prop,0].forEach((value,index)=>{
+    if(value>=lo&&value<=hi){
+      svgEl(svg,'line',{x1:xScale(value),x2:xScale(value),y1:m.t,y2:m.t+h,class:'event-line'});
+      const label=svgEl(svg,'text',{x:xScale(value)+5,y:m.t+15,class:'tick'});
+      label.textContent=index?'Object drop':'Propofol start';
+    }
+  });
+  const shown=memberElectrodes.filter(point=>Number(point.component_concordance_score)*100>=threshold);
+  shown.forEach(point=>{
+    const electrodeX=numberArray(point.time_relative_to_object_drop_sec).length?numberArray(point.time_relative_to_object_drop_sec):x;
+    const d=pathD(electrodeX,numberArray(point.trajectory),xScale,yScale);
+    const line=svgEl(svg,'path',{d,class:'electrode-line',stroke:'#209969'});
+    const hit=svgEl(svg,'path',{d,class:'trajectory-hit'});
+    const activate=()=>{line.classList.add('hovered');showTrajectoryInfo(entry,point)};
+    hit.onmouseenter=activate;
+    hit.onmousemove=activate;
+    hit.onmouseleave=()=>line.classList.remove('hovered');
+  });
+  if($('showMean').checked)svgEl(svg,'path',{d:pathD(x,numberArray(entry.patient_mean_trajectory),xScale,yScale),class:'mean-line'});
+  const pcs=entry.components||[];
+  const showPc1=$('showPc1').checked&&pcs[0];
+  if(showPc1)svgEl(svg,'path',{d:pathD(x,numberArray(pcs[0].rescaled_trajectory),xScale,yScale),class:'pc1-line'});
+  const showPc2=$('showPc2').checked&&pcs[1];
+  const showPc3=$('showPc3').checked&&pcs[2];
+  if(showPc2)svgEl(svg,'path',{d:pathD(x,numberArray(pcs[1].rescaled_trajectory),xScale,yScale),class:'pc2-line'});
+  if(showPc3)svgEl(svg,'path',{d:pathD(x,numberArray(pcs[2].rescaled_trajectory),xScale,yScale),class:'pc3-line'});
+  $('trajTitle').textContent=entry.patient_id+' - '+entry.band+' - '+groupLabel(activeChannelGroup)+' trajectories and PCA components';
+  $('trajSubtitle').textContent=shown.length+' of '+memberElectrodes.length+' component-member electrodes meet the '+threshold+'% PCA concordance threshold. Window: '+timeModeLabel(wantedMode)+'. Partial members and outliers are hidden. The x-axis spans the full available component-member electrode recording.';
+  let legend='<span class="chip"><span class="swatch" style="background:#209969"></span>Component member</span>';
+  if($('showMean').checked)legend+='<span class="chip"><span class="swatch" style="background:#111827"></span>Patient mean</span>';
+  if(showPc1)legend+='<span class="chip"><span class="swatch" style="background:#e24a33"></span>PC1 '+fmt(Number(pcs[0]?.explained_variance)*100)+'%</span>';
+  if(showPc2)legend+='<span class="chip"><span class="swatch" style="background:#6d28d9"></span>PC2 '+fmt(Number(pcs[1].explained_variance)*100)+'%'+(pcs[1].retained?' retained':' descriptive')+'</span>';
+  if(showPc3)legend+='<span class="chip"><span class="swatch" style="background:#db2777"></span>PC3 '+fmt(Number(pcs[2].explained_variance)*100)+'%'+(pcs[2].retained?' retained':' descriptive, dashed')+'</span>';
+  $('trajLegend').innerHTML=legend;
+  const xLabel=svgEl(svg,'text',{x:m.l+w/2,y:665,'text-anchor':'middle',class:'axis-label'});
+  xLabel.textContent='Time relative to object drop (s)';
+  const yLabel=svgEl(svg,'text',{x:22,y:m.t+h/2,transform:'rotate(-90 22 '+(m.t+h/2)+')','text-anchor':'middle',class:'axis-label'});
+  yLabel.textContent='Normalized PSD [0,1]';
+}
+function drawCohortTraj(wantedMode){
+  const svg=$('trajSvg');
+  clear(svg);
+  const selected=trajectories.filter(row=>patientMatchesInductionMode(row.patient_id)&&row.band===$('trajBand').value&&(row.channel_group||'mixed')===activeChannelGroup&&(row.pca_time_mode||'analysis_window')===wantedMode&&numberArray(row.time_relative_to_object_drop_sec).filter(Number.isFinite).length>1);
+  const requested=[];
+  if($('showMean').checked)requested.push({key:'mean',label:'Mean',dash:'',width:3});
+  if($('showPc1').checked)requested.push({key:'pc1',label:'PC1',dash:'',width:2.6});
+  if($('showPc2').checked)requested.push({key:'pc2',label:'PC2',dash:'10 6',width:2.6});
+  if($('showPc3').checked)requested.push({key:'pc3',label:'PC3',dash:'3 6',width:2.6});
+  if(!selected.length||!requested.length){
+    $('trajTitle').textContent='All-patient PCA overlay unavailable';
+    $('trajSubtitle').textContent=!requested.length?'Select at least one of Mean, PC1, PC2 or PC3.':'No patient has a valid PCA payload for this band, channel group and window.';
+    $('trajLegend').innerHTML='';
+    return;
+  }
+  const m={l:80,r:35,t:30,b:75},w=1280-m.l-m.r,h=680-m.t-m.b;
+  const allX=selected.flatMap(entry=>cohortTimeArray(entry.time_relative_to_object_drop_sec,entry.patient_id)).filter(Number.isFinite);
+  const lo=Math.min(...allX),hi=Math.max(...allX);
+  const xScale=value=>m.l+(value-lo)/Math.max(hi-lo,1e-9)*w;
+  const yScale=value=>m.t+h-Math.max(0,Math.min(1,value))*h;
+  for(let i=0;i<=5;i++){
+    const yValue=i/5;
+    svgEl(svg,'line',{x1:m.l,x2:m.l+w,y1:yScale(yValue),y2:yScale(yValue),class:'grid'});
+    const label=svgEl(svg,'text',{x:m.l-9,y:yScale(yValue)+4,'text-anchor':'end',class:'tick'});label.textContent=yValue.toFixed(1);
+  }
+  for(let i=0;i<=7;i++){
+    const xValue=lo+i/7*(hi-lo);
+    svgEl(svg,'line',{x1:xScale(xValue),x2:xScale(xValue),y1:m.t,y2:m.t+h,class:'grid'});
+    const label=svgEl(svg,'text',{x:xScale(xValue),y:m.t+h+22,'text-anchor':'middle',class:'tick'});label.textContent=fmt(xValue);
+  }
+  if(lo<=0&&hi>=0){svgEl(svg,'line',{x1:xScale(0),x2:xScale(0),y1:m.t,y2:m.t+h,class:'event-line'});const label=svgEl(svg,'text',{x:xScale(0)+5,y:m.t+15,class:'tick'});label.textContent='Object drop'}
+  const patientPalette=['#0f5b99','#d1495b','#1b998b','#7b2cbf','#f08c00','#2f6690','#6a994e','#bc4749','#4361ee','#9c6644','#0081a7','#c1121f','#5a189a','#2a9d8f','#ef6c00','#3a5a40','#7f5539','#264653','#8f2d56','#006d77','#7209b7','#588157'];
+  selected.forEach((entry,index)=>{
+    const x=cohortTimeArray(entry.time_relative_to_object_drop_sec,entry.patient_id);
+    const pcs=entry.components||[];
+    const curves={mean:numberArray(entry.patient_mean_trajectory),pc1:numberArray(pcs[0]?.rescaled_trajectory),pc2:numberArray(pcs[1]?.rescaled_trajectory),pc3:numberArray(pcs[2]?.rescaled_trajectory)};
+    requested.forEach(spec=>{
+      const y=curves[spec.key];
+      if(!y||!y.filter(Number.isFinite).length)return;
+      const line=svgEl(svg,'path',{d:pathD(x,y,xScale,yScale),class:'cohort-pca-line',stroke:patientPalette[index%patientPalette.length],'stroke-width':spec.width,'stroke-dasharray':spec.dash});
+      const componentIndex=spec.key.startsWith('pc')?Number(spec.key.slice(2))-1:-1;
+      const variance=componentIndex>=0?Number(pcs[componentIndex]?.explained_variance)*100:NaN;
+      line.onmousemove=evt=>showTip(evt,entry.patient_id,[spec.label+(Number.isFinite(variance)?' explained variance: '+fmt(variance)+'%':'') ,'Band: '+entry.band,'Channels: '+groupLabel(activeChannelGroup),'Window: '+timeModeLabel(wantedMode)]);
+      line.onmouseleave=hideTip;
+    });
+  });
+  $('trajTitle').textContent='All patients - '+$('trajBand').value+' - '+groupLabel(activeChannelGroup)+' PCA trajectories';
+  $('trajSubtitle').textContent=selected.length+' patients with valid patient-specific PCA payloads. Curves compare normalized PSD shapes; PCA axes are fitted separately within each patient. '+(inductionMode==='normalized_combined'?'The 0.5-rate patient time axes are compressed by 0.5 for a 1.0-equivalent exploratory comparison.':'Times remain in recorded seconds for the selected induction-rate group.');
+  $('trajLegend').innerHTML=requested.map(spec=>'<span class="chip">'+spec.label+(spec.dash?' (dashed)':'')+'</span>').join('')+'<span class="chip">Color = patient</span>';
+  const xLabel=svgEl(svg,'text',{x:m.l+w/2,y:665,'text-anchor':'middle',class:'axis-label'});xLabel.textContent='Time relative to object drop (s)';
+  const yLabel=svgEl(svg,'text',{x:22,y:m.t+h/2,transform:'rotate(-90 22 '+(m.t+h/2)+')','text-anchor':'middle',class:'axis-label'});yLabel.textContent='Normalized temporal pattern [0,1]';
+}
+function embeddingCategoryValue(row,metric){
+  if(metric==='anatomical_region')return row.anatomical_region||'N/A';
+  if(metric==='patient_id')return row.patient_id||'N/A';
+  if(metric==='hemisphere')return row.hemisphere||'N/A';
+  if(metric==='dominant_component')return row.dominant_component||'N/A';
+  return 'N/A';
+}
+function embeddingContinuousValue(row,metric){return Number(row?.[metric])}
+function embeddingQuantile(sortedValues,q){
+  if(!sortedValues.length)return NaN;
+  const pos=(sortedValues.length-1)*q;
+  const lo=Math.floor(pos);
+  const hi=Math.ceil(pos);
+  if(lo===hi)return sortedValues[lo];
+  const t=pos-lo;
+  return sortedValues[lo]*(1-t)+sortedValues[hi]*t;
+}
+function embeddingSizes(rows,metric){
+  if(metric==='uniform')return rows.map(()=>10);
+  const values=rows.map(row=>embeddingContinuousValue(row,metric)).filter(Number.isFinite).sort((a,b)=>a-b);
+  if(!values.length)return rows.map(()=>10);
+  const lo=embeddingQuantile(values,.1);
+  const hi=embeddingQuantile(values,.9);
+  if(!Number.isFinite(lo)||!Number.isFinite(hi)||hi<=lo)return rows.map(()=>14);
+  return rows.map(row=>{
+    const raw=embeddingContinuousValue(row,metric);
+    if(!Number.isFinite(raw))return 8;
+    const clipped=Math.max(lo,Math.min(hi,raw));
+    return 7+((clipped-lo)/(hi-lo))*15;
+  });
+}
+function embeddingAxisLabel(rows,key,label){
+  if($('embedPatient').value==='__all__')return label+' score (patient-specific axis)';
+  const hit=rows.find(row=>Number.isFinite(Number(row[key])));
+  if(!hit)return label+' score';
+  return label+' — '+fmt(Number(hit[key])*100,1)+'% explained variance';
+}
+function embeddingStatHtml(label,value,explanation){return '<div class="stat"><b>'+esc(label)+'</b><span>'+esc(value)+'</span>'+(explanation?'<small>'+esc(explanation)+'</small>':'')+'</div>'}
+function embeddingHoverLines(row){
+  return[
+    'Patient: '+esc(row.patient_id||'N/A'),
+    'Electrode: '+esc(row.electrode_name||'N/A'),
+    'Anatomical region: '+esc(row.anatomical_region||'N/A'),
+    'Hemisphere: '+esc(row.hemisphere||'N/A'),
+    'PC1 score: '+fmt(row.pc1_score,3),
+    'PC2 score: '+fmt(row.pc2_score,3),
+    'PC3 score: '+fmt(row.pc3_score,3),
+    'Dominant component: '+esc(row.dominant_component||'N/A'),
+    'PCA membership: '+esc(row.pca_membership||'N/A'),
+    'Reconstruction correlation: '+fmt(row.reconstruction_corr,3),
+    'PCA concordance score: '+fmt(Number(row.component_concordance_score)*100,1)+'%',
+    'Delta lag: '+fmt(row.delta_lag_sec,1)+' s',
+    'Beta lag: '+fmt(row.beta_lag_sec,1)+' s',
+    'Gamma lag: '+fmt(row.gamma_lag_sec,1)+' s',
+    'Object-drop-relative timing: '+fmt(row.object_drop_relative_timing_sec,1)+' s'
+  ];
+}
+function embeddingCategoryColor(metric,category,index){
+  if(metric==='dominant_component')return ({PC1:'#e24a33',PC2:'#6d28d9',PC3:'#db2777','N/A':'#94a3b8'})[category]||'#94a3b8';
+  if(metric==='hemisphere')return ({left:'#2563eb',right:'#dc2626',midline:'#16a34a','N/A':'#94a3b8'})[category]||'#94a3b8';
+  return embeddingPalette[index%embeddingPalette.length];
+}
+function embeddingHexToRgb(hex){const clean=String(hex||'').replace('#','');if(clean.length!==6)return[148,163,184];return[parseInt(clean.slice(0,2),16),parseInt(clean.slice(2,4),16),parseInt(clean.slice(4,6),16)]}
+function embeddingRgbToHex(rgb){return'#'+rgb.map(v=>Math.max(0,Math.min(255,Math.round(v))).toString(16).padStart(2,'0')).join('')}
+function embeddingInterpolateHex(a,b,t){const ar=embeddingHexToRgb(a),br=embeddingHexToRgb(b);return embeddingRgbToHex([ar[0]+(br[0]-ar[0])*t,ar[1]+(br[1]-ar[1])*t,ar[2]+(br[2]-ar[2])*t])}
+function embeddingContinuousColor(value,domain){
+  const stops=[[0,'#30123b'],[.16,'#4145ab'],[.33,'#2c7ef7'],[.5,'#1fb9b8'],[.67,'#73d055'],[.84,'#fde725'],[1,'#f97b1d']];
+  if(!Number.isFinite(value))return'#cbd5e1';
+  const lo=domain.lo,hi=domain.hi;
+  const t=(!Number.isFinite(lo)||!Number.isFinite(hi)||hi<=lo)?.5:Math.max(0,Math.min(1,(value-lo)/(hi-lo)));
+  for(let i=1;i<stops.length;i++){
+    if(t<=stops[i][0]){
+      const prev=stops[i-1];
+      const next=stops[i];
+      const local=(t-prev[0])/(next[0]-prev[0]||1);
+      return embeddingInterpolateHex(prev[1],next[1],local);
+    }
+  }
+  return stops[stops.length-1][1];
+}
+function embeddingContinuousDomain(rows,metric){
+  const values=rows.map(row=>embeddingContinuousValue(row,metric)).filter(Number.isFinite).sort((a,b)=>a-b);
+  if(!values.length)return{lo:NaN,hi:NaN};
+  const lo=embeddingQuantile(values,.1);
+  const hi=embeddingQuantile(values,.9);
+  return{lo:Number.isFinite(lo)?lo:values[0],hi:Number.isFinite(hi)?hi:values[values.length-1]};
+}
+function embeddingRadius(size){if(!Number.isFinite(size))return 4;return 3.2+Math.max(0,Math.min(1,(size-7)/15))*4.6}
+function embeddingTickLabel(value){return Number.isFinite(value)?Number(value).toFixed(2).replace(/\.00$/,'').replace(/(\.\d)0$/,'$1'):'NA'}
+function embeddingSelectedAxes(){
+  return[
+    {checkbox:'embedShowPc1',key:'pc1_score',varianceKey:'pc1_explained_variance',label:'PC1'},
+    {checkbox:'embedShowPc2',key:'pc2_score',varianceKey:'pc2_explained_variance',label:'PC2'},
+    {checkbox:'embedShowPc3',key:'pc3_score',varianceKey:'pc3_explained_variance',label:'PC3'}
+  ].filter(axis=>$(axis.checkbox).checked);
+}
+function renderEmbeddingLegend(host,rows,colorMetric,rowMeta,continuousDomain){
+  const legend=document.createElement('div');
+  legend.className='embedding-legend-row';
+  if(categoricalEmbeddingMetrics.has(colorMetric)){
+    const categories=sortedUnique(rows.map(row=>embeddingCategoryValue(row,colorMetric)));
+    if(categories.length<=12){
+      categories.forEach((category,index)=>{
+        const chip=document.createElement('div');
+        chip.className='embedding-legend-chip';
+        const swatch=document.createElement('span');
+        swatch.className='swatch';
+        swatch.style.background=embeddingCategoryColor(colorMetric,category,index);
+        chip.appendChild(swatch);
+        chip.appendChild(document.createTextNode(category));
+        legend.appendChild(chip);
+      });
+    }else{
+      const note=document.createElement('div');
+      note.className='embedding-legend-note';
+      note.textContent='Legend hidden because this selection contains '+categories.length+' categories.';
+      legend.appendChild(note);
+    }
+  }else{
+    const wrap=document.createElement('div');
+    wrap.className='embedding-colorbar';
+    const note=document.createElement('div');
+    note.className='embedding-legend-note';
+    note.textContent=optionLabel(embeddingColorOptions,colorMetric);
+    const bar=document.createElement('div');
+    bar.className='embedding-colorbar-bar';
+    const labels=document.createElement('div');
+    labels.className='embedding-colorbar-labels';
+    const left=document.createElement('span');
+    left.textContent=embeddingTickLabel(continuousDomain.lo);
+    const right=document.createElement('span');
+    right.textContent=embeddingTickLabel(continuousDomain.hi);
+    labels.appendChild(left);
+    labels.appendChild(right);
+    wrap.appendChild(note);
+    wrap.appendChild(bar);
+    wrap.appendChild(labels);
+    legend.appendChild(wrap);
+  }
+  host.appendChild(legend);
+}
+function embeddingClamp(value,lo,hi){return Math.max(lo,Math.min(hi,value))}
+function buildEmbedding3DPoints(rows,rowMeta){
+  function robustAxis(values){
+    const sorted=values.filter(Number.isFinite).sort((a,b)=>a-b);
+    if(!sorted.length)return{center:0,span:1};
+    const center=embeddingQuantile(sorted,.5);
+    const lo=embeddingQuantile(sorted,.08);
+    const hi=embeddingQuantile(sorted,.92);
+    const span=Math.max(Math.abs(hi-center),Math.abs(center-lo),1e-6);
+    return{center:Number.isFinite(center)?center:0,span};
+  }
+  const axis1=robustAxis(rows.map(row=>Number(row.pc1_score)));
+  const axis2=robustAxis(rows.map(row=>Number(row.pc2_score)));
+  const axis3=robustAxis(rows.map(row=>Number(row.pc3_score)));
+  const sceneScale=1.55;
+  return rows.map(row=>{
+    const x=embeddingClamp(((Number(row.pc1_score)-axis1.center)/axis1.span)*sceneScale,-2.4,2.4);
+    const y=embeddingClamp(((Number(row.pc2_score)-axis2.center)/axis2.span)*sceneScale,-2.4,2.4);
+    const z=embeddingClamp(((Number(row.pc3_score)-axis3.center)/axis3.span)*sceneScale,-2.4,2.4);
+    return{row,x,y,z,color:rowMeta.get(row).color,radius:rowMeta.get(row).radius};
+  });
+}
+function renderEmbedding3D(host,rows,rowMeta,axisLabels,colorMetric,continuousDomain){
+  const figure=document.createElement('div');
+  figure.className='embedding-figure';
+  renderEmbeddingLegend(figure,rows,colorMetric,rowMeta,continuousDomain);
+  const shell=document.createElement('div');
+  shell.className='embedding-canvas-shell';
+  const toolbar=document.createElement('div');
+  toolbar.className='embedding-toolbar';
+  const hint=document.createElement('div');
+  hint.className='embedding-canvas-hint';
+  hint.textContent='Drag to rotate. Use the mouse wheel to zoom. Double-click to reset the camera.';
+  const actions=document.createElement('div');
+  actions.className='embedding-toolbar-actions';
+  const canvas=document.createElement('canvas');
+  canvas.className='embedding-canvas';
+  canvas.width=1240;
+  canvas.height=760;
+  const ctx=canvas.getContext('2d');
+  const scenePoints=buildEmbedding3DPoints(rows,rowMeta);
+  const axisExtent={pc1:Math.max(...scenePoints.map(point=>Math.abs(point.x)),1.4)+0.35,pc2:Math.max(...scenePoints.map(point=>Math.abs(point.y)),1.4)+0.35,pc3:Math.max(...scenePoints.map(point=>Math.abs(point.z)),1.4)+0.35};
+  const state={yaw:-0.72,pitch:0.38,zoom:1.18,dragging:false,lastX:0,lastY:0,projected:[]};
+  [['Reset',()=>{state.yaw=-0.72;state.pitch=0.38;state.zoom=1.18;draw()}],['Front',()=>{state.yaw=0;state.pitch=0;draw()}],['Left',()=>{state.yaw=-Math.PI/2;state.pitch=0.05;draw()}],['Top',()=>{state.yaw=0;state.pitch=-Math.PI/2+0.05;draw()}]].forEach(([label,handler])=>{
+    const btn=document.createElement('button');
+    btn.type='button';
+    btn.className='embedding-view-btn';
+    btn.textContent=label;
+    btn.onclick=handler;
+    actions.appendChild(btn);
+  });
+  toolbar.appendChild(hint);
+  toolbar.appendChild(actions);
+  shell.appendChild(toolbar);
+  const wrap=document.createElement('div');
+  wrap.className='embedding-canvas-wrap';
+  wrap.appendChild(canvas);
+  shell.appendChild(wrap);
+  const footer=document.createElement('div');
+  footer.className='embedding-canvas-footer';
+  const leftFoot=document.createElement('div');
+  leftFoot.textContent='Axes: '+axisLabels.pc1+' | '+axisLabels.pc2+' | '+axisLabels.pc3;
+  footer.appendChild(leftFoot);
+  shell.appendChild(footer);
+  figure.appendChild(shell);
+  host.appendChild(figure);
+  function rotatePoint(point){
+    const cy=Math.cos(state.yaw),sy=Math.sin(state.yaw);
+    let x=point.x*cy-point.z*sy;
+    let z=point.x*sy+point.z*cy;
+    let y=point.y;
+    const cx=Math.cos(state.pitch),sx=Math.sin(state.pitch);
+    const y2=y*cx-z*sx;
+    const z2=y*sx+z*cx;
+    return{x,y:y2,z:z2,row:point.row,color:point.color,radius:point.radius};
+  }
+  function projectPoint(point,width,height){
+    const camera=7.4;
+    const focal=Math.min(width,height)*0.72*state.zoom;
+    const denom=Math.max(1.35,camera-point.z);
+    const scale=focal/denom;
+    return{sx:width/2+point.x*scale,sy:height/2-point.y*scale,depth:point.z,scale,row:point.row,color:point.color,radius:point.radius};
+  }
+  function drawAxes(width,height){
+    const axes=[{key:'pc1',color:'#e24a33',start:{x:-axisExtent.pc1,y:0,z:0},end:{x:axisExtent.pc1,y:0,z:0}},{key:'pc2',color:'#6d28d9',start:{x:0,y:-axisExtent.pc2,z:0},end:{x:0,y:axisExtent.pc2,z:0}},{key:'pc3',color:'#0f766e',start:{x:0,y:0,z:-axisExtent.pc3},end:{x:0,y:0,z:axisExtent.pc3}}];
+    axes.forEach(axis=>{
+      const start=projectPoint(rotatePoint({...axis.start,row:null,color:axis.color,radius:0}),width,height);
+      const end=projectPoint(rotatePoint({...axis.end,row:null,color:axis.color,radius:0}),width,height);
+      ctx.strokeStyle=axis.color;
+      ctx.lineWidth=2.6;
+      ctx.beginPath();
+      ctx.moveTo(start.sx,start.sy);
+      ctx.lineTo(end.sx,end.sy);
+      ctx.stroke();
+      ctx.fillStyle=axis.color;
+      ctx.font='700 14px Arial';
+      ctx.fillText(axisLabels[axis.key],end.sx+8,end.sy-8);
+    });
+  }
+  function resizeCanvas(){
+    const rect=canvas.getBoundingClientRect();
+    const ratio=Math.max(1,window.devicePixelRatio||1);
+    const nextWidth=Math.max(900,Math.round(rect.width*ratio));
+    const nextHeight=Math.max(620,Math.round(rect.height*ratio));
+    if(canvas.width!==nextWidth||canvas.height!==nextHeight){
+      canvas.width=nextWidth;
+      canvas.height=nextHeight;
+    }
+    ctx.setTransform(1,0,0,1,0,0);
+    ctx.scale(ratio,ratio);
+    draw();
+  }
+  function draw(){
+    const rect=canvas.getBoundingClientRect();
+    const width=rect.width;
+    const height=rect.height;
+    ctx.clearRect(0,0,width,height);
+    ctx.fillStyle='#ffffff';
+    ctx.fillRect(0,0,width,height);
+    ctx.strokeStyle='#dbe5ef';
+    ctx.lineWidth=1;
+    for(let i=1;i<=5;i++){
+      const y=height*i/6;
+      ctx.beginPath();
+      ctx.moveTo(0,y);
+      ctx.lineTo(width,y);
+      ctx.stroke();
+    }
+    for(let i=1;i<=7;i++){
+      const x=width*i/8;
+      ctx.beginPath();
+      ctx.moveTo(x,0);
+      ctx.lineTo(x,height);
+      ctx.stroke();
+    }
+    drawAxes(width,height);
+    const projected=scenePoints.map(point=>projectPoint(rotatePoint(point),width,height)).sort((a,b)=>a.depth-b.depth);
+    state.projected=projected;
+    projected.forEach(point=>{
+      const radius=Math.max(4.2,point.radius*(0.95+point.scale/(Math.min(width,height)*0.2)));
+      ctx.beginPath();
+      ctx.arc(point.sx,point.sy,radius,0,Math.PI*2);
+      ctx.fillStyle=point.color;
+      ctx.globalAlpha=.94;
+      ctx.fill();
+      ctx.globalAlpha=1;
+      ctx.lineWidth=1.4;
+      ctx.strokeStyle='#ffffff';
+      ctx.stroke();
+    });
+  }
+  function nearestPoint(clientX,clientY){
+    const rect=canvas.getBoundingClientRect();
+    const x=clientX-rect.left;
+    const y=clientY-rect.top;
+    let best=null;
+    let bestDist=18;
+    for(const point of state.projected||[]){
+      const dist=Math.hypot(point.sx-x,point.sy-y);
+      if(dist<bestDist){
+        best=point;
+        bestDist=dist;
+      }
+    }
+    return best;
+  }
+  canvas.addEventListener('mousedown',evt=>{
+    state.dragging=true;
+    state.lastX=evt.clientX;
+    state.lastY=evt.clientY;
+    canvas.classList.add('dragging');
+    hideTip();
+  });
+  window.addEventListener('mouseup',()=>{
+    state.dragging=false;
+    canvas.classList.remove('dragging');
+  });
+  window.addEventListener('mousemove',evt=>{
+    if(!host.contains(canvas))return;
+    if(state.dragging){
+      state.yaw+=((evt.clientX-state.lastX)/220);
+      state.pitch=embeddingClamp(state.pitch+((evt.clientY-state.lastY)/260),-1.45,1.45);
+      state.lastX=evt.clientX;
+      state.lastY=evt.clientY;
+      draw();
+      return;
+    }
+    const hit=nearestPoint(evt.clientX,evt.clientY);
+    if(hit){
+      showTip(evt,'',embeddingHoverLines(hit.row));
+    }else{
+      hideTip();
+    }
+  });
+  canvas.addEventListener('mouseleave',()=>{if(!state.dragging)hideTip()});
+  canvas.addEventListener('wheel',evt=>{
+    evt.preventDefault();
+    state.zoom=embeddingClamp(state.zoom*(evt.deltaY>0?.92:1.08),.65,2.9);
+    draw();
+  },{passive:false});
+  canvas.addEventListener('dblclick',()=>{
+    state.yaw=-0.72;
+    state.pitch=0.38;
+    state.zoom=1.18;
+    draw();
+  });
+  requestAnimationFrame(resizeCanvas);
+  setTimeout(resizeCanvas,200);
+}
+function renderEmbeddingPair(host,title,xKey,yKey,xTitle,yTitle,pairRows,rowMeta){
+  const figure=document.createElement('div');
+  figure.className='embedding-figure';
+  const panel=document.createElement('div');
+  panel.className='embedding-panel-card';
+  const heading=document.createElement('div');
+  heading.className='embedding-panel-heading';
+  heading.textContent=title;
+  panel.appendChild(heading);
+  const svg=document.createElementNS('http://www.w3.org/2000/svg','svg');
+  svg.setAttribute('viewBox','0 0 620 520');
+  svg.setAttribute('class','embedding-svg');
+  panel.appendChild(svg);
+  const m={l:70,r:24,t:24,b:64},W=620,H=520,w=W-m.l-m.r,h=H-m.t-m.b;
+  const xVals=pairRows.map(row=>Number(row[xKey])).filter(Number.isFinite);
+  const yVals=pairRows.map(row=>Number(row[yKey])).filter(Number.isFinite);
+  if(!xVals.length||!yVals.length){
+    const msg=svgEl(svg,'text',{x:W/2,y:H/2,'text-anchor':'middle',class:'tick'});
+    msg.textContent='No finite coordinates';
+    host.appendChild(panel);
+    return;
+  }
+  let xMin=Math.min(...xVals),xMax=Math.max(...xVals),yMin=Math.min(...yVals),yMax=Math.max(...yVals);
+  const xPad=(xMax-xMin)||1;
+  const yPad=(yMax-yMin)||1;
+  xMin-=xPad*.08;
+  xMax+=xPad*.08;
+  yMin-=yPad*.08;
+  yMax+=yPad*.08;
+  const xScale=value=>m.l+(value-xMin)/(xMax-xMin||1)*w;
+  const yScale=value=>m.t+h-(value-yMin)/(yMax-yMin||1)*h;
+  for(let i=0;i<=4;i++){
+    const tx=xMin+(xMax-xMin)*i/4;
+    const ty=yMin+(yMax-yMin)*i/4;
+    svgEl(svg,'line',{x1:xScale(tx),x2:xScale(tx),y1:m.t,y2:m.t+h,class:'grid'});
+    svgEl(svg,'line',{x1:m.l,x2:m.l+w,y1:yScale(ty),y2:yScale(ty),class:'grid'});
+    const xt=svgEl(svg,'text',{x:xScale(tx),y:m.t+h+22,'text-anchor':'middle',class:'tick'});
+    xt.textContent=embeddingTickLabel(tx);
+    const yt=svgEl(svg,'text',{x:m.l-10,y:yScale(ty)+4,'text-anchor':'end',class:'tick'});
+    yt.textContent=embeddingTickLabel(ty);
+  }
+  if(xMin<0&&xMax>0)svgEl(svg,'line',{x1:xScale(0),x2:xScale(0),y1:m.t,y2:m.t+h,class:'embedding-zero-line'});
+  if(yMin<0&&yMax>0)svgEl(svg,'line',{x1:m.l,x2:m.l+w,y1:yScale(0),y2:yScale(0),class:'embedding-zero-line'});
+  svgEl(svg,'line',{x1:m.l,x2:m.l+w,y1:m.t+h,y2:m.t+h,class:'axis'});
+  svgEl(svg,'line',{x1:m.l,x2:m.l,y1:m.t,y2:m.t+h,class:'axis'});
+  pairRows.forEach(row=>{
+    const meta=rowMeta.get(row);
+    const point=svgEl(svg,'circle',{cx:xScale(Number(row[xKey])),cy:yScale(Number(row[yKey])),r:meta.radius,fill:meta.color,opacity:.92,stroke:'#ffffff','stroke-width':1.2});
+    point.onmousemove=evt=>showTip(evt,'',embeddingHoverLines(row));
+    point.onmouseleave=hideTip;
+  });
+  const xlabel=svgEl(svg,'text',{x:m.l+w/2,y:H-18,'text-anchor':'middle',class:'embedding-axis-title'});
+  xlabel.textContent=xTitle;
+  const ylabel=svgEl(svg,'text',{x:18,y:m.t+h/2,transform:'rotate(-90 18 '+(m.t+h/2)+')','text-anchor':'middle',class:'embedding-axis-title'});
+  ylabel.textContent=yTitle;
+  host.appendChild(panel);
+}
+function embeddingDefaultColor(){
+  const rows=embeddingRows.filter(row=>row.band===$('embedBand').value&&(row.channel_group||'mixed')===embedChannelGroup&&(row.pca_time_mode||'analysis_window')===embedTimeMode);
+  const regions=new Set(rows.map(row=>String(row.anatomical_region||'').trim()).filter(Boolean));
+  return regions.size>18?'dominant_component':'anatomical_region';
+}
+function initializeEmbeddingControls(){
+  const patientSelect=$('embedPatient');
+  const allOption=document.createElement('option');
+  allOption.value='__all__';
+  allOption.textContent='All patients (exploratory overlay)';
+  patientSelect.appendChild(allOption);
+  sortedUnique(embeddingRows.map(row=>row.patient_id)).forEach(value=>{
+    const option=document.createElement('option');
+    option.value=value;
+    option.textContent=value;
+    patientSelect.appendChild(option);
+  });
+  const firstPatient=sortedUnique(embeddingRows.map(row=>row.patient_id))[0];
+  patientSelect.value=firstPatient||'__all__';
+  populateMetricSelect('embedColorBy',embeddingColorOptions,'anatomical_region');
+  populateMetricSelect('embedSizeBy',embeddingSizeOptions,'uniform');
+  $('embedColorBy').value=embeddingDefaultColor();
+  document.querySelectorAll('#embedChannelGroupTabs .subtab').forEach(btn=>btn.onclick=()=>{
+    embedChannelGroup=btn.dataset.group;
+    document.querySelectorAll('#embedChannelGroupTabs .subtab').forEach(node=>node.classList.toggle('active',node===btn));
+    updateEmbeddingMetricHelp();
+    if(embeddingPanelIsActive())scheduleEmbeddingRender();
+  });
+  document.querySelectorAll('#embedTimeModeTabs .subtab').forEach(btn=>btn.onclick=()=>{
+    embedTimeMode=btn.dataset.mode;
+    document.querySelectorAll('#embedTimeModeTabs .subtab').forEach(node=>node.classList.toggle('active',node===btn));
+    updateEmbeddingMetricHelp();
+    if(embeddingPanelIsActive())scheduleEmbeddingRender();
+  });
+}
+function filteredEmbeddingRows(ignorePatientFilter){
+  let rows=embeddingRows.filter(row=>row.band===$('embedBand').value&&(row.channel_group||'mixed')===embedChannelGroup&&(row.pca_time_mode||'analysis_window')===embedTimeMode&&Number(row.component_concordance_score)*100>=threshold);
+  const patientValue=$('embedPatient').value;
+  if(!ignorePatientFilter&&patientValue&&patientValue!=='__all__'){
+    rows=rows.filter(row=>row.patient_id===patientValue);
+  }else if(patientValue==='__all__'){
+    rows=rows.filter(row=>patientMatchesInductionMode(row.patient_id)).map(row=>({
+      ...row,
+      delta_lag_sec:cohortTimeValue(row.delta_lag_sec,row.patient_id),
+      beta_lag_sec:cohortTimeValue(row.beta_lag_sec,row.patient_id),
+      gamma_lag_sec:cohortTimeValue(row.gamma_lag_sec,row.patient_id),
+      object_drop_relative_timing_sec:cohortTimeValue(row.object_drop_relative_timing_sec,row.patient_id)
+    }));
+  }
+  return rows;
+}
+function updateEmbeddingMetricHelp(){
+  const colorMetric=$('embedColorBy').value;
+  const sizeMetric=$('embedSizeBy').value;
+  $('embedMetricHelp').textContent='Threshold is a hard inclusion filter: only electrodes with PCA concordance score ≥ '+threshold+'% remain visible. That score is max(0, reconstruction correlation) × dominant component weight. Explained variance is different: it is a patient-level property of each PCA axis and does not by itself include or exclude electrodes. Color by: '+(embeddingColorHelp[colorMetric]||'')+' Point size: '+(embeddingSizeHelp[sizeMetric]||'')+' When point size is based on concordance score, it only rescales the electrodes that already passed the threshold; it does not add or remove points.';
+}
+function renderEmbeddingPlot(){
+  const host=$('embeddingPlot');
+  const empty=$('embeddingEmpty');
+  const stats=$('embedStats');
+  const title=$('embedTitle');
+  const subtitle=$('embedSubtitle');
+  const colorMetric=$('embedColorBy').value;
+  const sizeMetric=$('embedSizeBy').value;
+  const patientValue=$('embedPatient').value;
+  const rows=filteredEmbeddingRows(false);
+  const patientLabel=patientValue==='__all__'?'all patients (exploratory overlay)':patientValue;
+  title.textContent='PCA Embedding - '+patientLabel+' - '+$('embedBand').value+' - '+groupLabel(embedChannelGroup);
+  host.innerHTML='';
+  host.style.height='auto';
+  host.style.minHeight='0';
+  updateEmbeddingMetricHelp();
+  if(!rows.length){
+    empty.style.display='block';
+    empty.textContent='No PCA coordinates are available for this patient/band/channel-group/window selection after thresholding.';
+    stats.innerHTML='';
+    subtitle.textContent='';
+    return;
+  }
+  const selectedAxes=embeddingSelectedAxes().filter(axis=>rows.some(row=>Number.isFinite(Number(row[axis.key]))));
+  if(selectedAxes.length<2){
+    empty.style.display='block';
+    empty.textContent='Select at least two PCA axes with finite coordinates to render the embedding.';
+    stats.innerHTML=embeddingStatHtml('Electrodes with PCA coordinates',String(rows.length),'Rows available after thresholding in the selected PCA result.');
+    subtitle.textContent='A single PCA axis cannot define a 2D or 3D embedding on its own.';
+    return;
+  }
+  empty.style.display='none';
+  empty.textContent='';
+  const axisLabels={pc1:embeddingAxisLabel(rows,'pc1_explained_variance','PC1'),pc2:embeddingAxisLabel(rows,'pc2_explained_variance','PC2'),pc3:embeddingAxisLabel(rows,'pc3_explained_variance','PC3')};
+  subtitle.textContent=patientValue==='__all__'
+    ?'This overlay combines separately computed within-patient PCA coordinates. PCA coordinates are unchanged by induction-rate normalization; only patient inclusion and timing-based color/hover variables follow the selected rate mode.'
+    :'Each point is one electrode placed in the selected patient-specific PCA space. Apparent groupings remain exploratory and do not by themselves prove true clusters.';
+  const patientCount=new Set(rows.map(row=>row.patient_id)).size;
+  let plotRows=[];
+  let mode='2d';
+  if(selectedAxes.length>=3){
+    plotRows=rows.filter(row=>selectedAxes.every(axis=>Number.isFinite(Number(row[axis.key]))));
+    mode=plotRows.length?'3d':'2d';
+  }
+  if(mode==='2d'){
+    const pairAxes=selectedAxes.slice(0,2);
+    plotRows=rows.filter(row=>pairAxes.every(axis=>Number.isFinite(Number(row[axis.key]))));
+  }
+  if(!plotRows.length){
+    empty.style.display='block';
+    empty.textContent='No finite PCA coordinates remain after applying the selected axes and threshold.';
+    stats.innerHTML='';
+    return;
+  }
+  stats.innerHTML=[
+    embeddingStatHtml('Electrodes plotted',String(plotRows.length),'Finite PCA coordinates rendered in the current view after thresholding.'),
+    embeddingStatHtml('Patients represented',String(patientCount),patientValue==='__all__'?'Patients contributing to this exploratory overlay.':'Single-patient PCA view.')
+  ].join('');
+  const sizeValues=embeddingSizes(plotRows,sizeMetric);
+  const rowMeta=new Map();
+  const continuousDomain=embeddingContinuousDomain(plotRows,colorMetric);
+  if(categoricalEmbeddingMetrics.has(colorMetric)){
+    const categories=sortedUnique(plotRows.map(row=>embeddingCategoryValue(row,colorMetric)));
+    plotRows.forEach((row,index)=>rowMeta.set(row,{radius:embeddingRadius(sizeValues[index]),color:embeddingCategoryColor(colorMetric,embeddingCategoryValue(row,colorMetric),categories.indexOf(embeddingCategoryValue(row,colorMetric)))}));
+  }else{
+    plotRows.forEach((row,index)=>rowMeta.set(row,{radius:embeddingRadius(sizeValues[index]),color:embeddingContinuousColor(embeddingContinuousValue(row,colorMetric),continuousDomain)}));
+  }
+  if(mode==='3d'){
+    renderEmbedding3D(host,plotRows,rowMeta,axisLabels,colorMetric,continuousDomain);
+    return;
+  }
+  const figure=document.createElement('div');
+  figure.className='embedding-figure';
+  renderEmbeddingLegend(figure,plotRows,colorMetric,rowMeta,continuousDomain);
+  const pairAxes=selectedAxes.slice(0,2);
+  renderEmbeddingPair(
+    figure,
+    pairAxes[0].label+' vs '+pairAxes[1].label,
+    pairAxes[0].key,
+    pairAxes[1].key,
+    axisLabels[pairAxes[0].label.toLowerCase()],
+    axisLabels[pairAxes[1].label.toLowerCase()],
+    plotRows,
+    rowMeta
+  );
+  host.appendChild(figure);
+}
+function redraw(){
+  drawHist();
+  drawTraj();
+  if(embeddingPanelIsActive())scheduleEmbeddingRender();
+}
+document.querySelectorAll('.tab').forEach(btn=>btn.onclick=()=>{
+  document.querySelectorAll('.tab').forEach(node=>node.classList.toggle('active',node===btn));
+  document.querySelectorAll('.panel').forEach(node=>node.classList.remove('active'));
+  $(btn.dataset.tab+'Panel').classList.add('active');
+  activeDashboardTab=btn.dataset.tab;
+  updateContextControls();
+  if(btn.dataset.tab==='embedding')scheduleEmbeddingRender();
+});
+const viewNames=[...new Set(entries.map(entry=>entry.view_type+':'+entry.view_name))];
+viewNames.forEach(value=>{const option=document.createElement('option');option.value=value;option.textContent=value.replace(':',': ');$('histView').appendChild(option)});
+const patients=[...new Set(trajectories.map(entry=>entry.patient_id))];
+{const option=document.createElement('option');option.value='__all__';option.textContent='All patients - PCA overlay';$('trajPatient').appendChild(option)}
+patients.forEach(value=>{const option=document.createElement('option');option.value=value;option.textContent=value;$('trajPatient').appendChild(option)});
+$('threshold').oninput=()=>{threshold=Number($('threshold').value);$('thresholdLabel').textContent=threshold+'%';updateEmbeddingMetricHelp();redraw()};
+$('histView').oninput=()=>{drawHist();updateContextControls()};
+['histBand','binWidth'].forEach(id=>$(id).oninput=drawHist);
+$('trajPatient').oninput=()=>{drawTraj();updateContextControls()};
+['trajBand','extendedWindow','showMean','showPc1','showPc2','showPc3'].forEach(id=>$(id).oninput=drawTraj);
+document.querySelectorAll('#channelGroupTabs .subtab').forEach(btn=>btn.onclick=()=>{activeChannelGroup=btn.dataset.group;document.querySelectorAll('#channelGroupTabs .subtab').forEach(node=>node.classList.toggle('active',node===btn));drawTraj()});
+$('embedPatient').oninput=()=>{updateEmbeddingMetricHelp();updateContextControls();if(embeddingPanelIsActive())scheduleEmbeddingRender()};
+['embedBand','embedColorBy','embedSizeBy','embedShowPc1','embedShowPc2','embedShowPc3'].forEach(id=>$(id).oninput=()=>{updateEmbeddingMetricHelp();if(embeddingPanelIsActive())scheduleEmbeddingRender()});
+document.querySelectorAll('.induction-btn').forEach(btn=>btn.onclick=()=>setInductionMode(btn.dataset.inductionMode));
+window.addEventListener('resize',()=>{if(embeddingPanelIsActive())scheduleEmbeddingRender()});
+initializeEmbeddingControls();
+updateEmbeddingMetricHelp();
+updateContextControls();
+redraw();
+</script></body></html>
