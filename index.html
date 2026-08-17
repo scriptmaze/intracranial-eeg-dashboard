@@ -95,37 +95,37 @@ svg{display:block;width:100%;height:auto;background:#fff}
 .empty-note{padding:20px;background:#f8fbfe;border:1px solid var(--line)}
 @media(max-width:900px){body{padding:10px}.shell{padding:16px}h1{font-size:30px}.embedding-canvas{height:620px}}
 </style><script src="plotly.min.js"></script></head><body><main class="shell"><h1>Dashboard</h1>
-<div class="tabs"><button class="tab active" data-tab="distribution">Timing distributions</button><button class="tab" data-tab="trajectories">Patient trajectories + PCA</button><button class="tab" data-tab="embedding">PCA Embedding</button><button class="tab" data-tab="correlations">Correlations</button><a class="btn" href="brain_delta_plateau_timing_map.html">Cohort brain map</a></div>
+<div class="tabs"><button class="tab active" data-tab="distribution">Timing distributions</button><button class="tab" data-tab="trajectories">Patient trajectories + PCA</button><button class="tab" data-tab="embedding">PCA Embedding</button><button class="tab" data-tab="correlations">Correlations</button><a class="btn" href="brain_delta_plateau_timing_map.html?v=b1c7771b1281">Cohort brain map</a></div>
 <div class="controls" id="thresholdControls"><label>Concordance threshold <span id="thresholdLabel">0%</span></label><div class="threshold"><input id="threshold" type="range" min="0" max="100" value="0" step="1"></div></div>
 <div class="induction-controls" id="inductionControls" hidden><span class="induction-title">Induction-rate cohort</span><button type="button" class="induction-btn" data-induction-mode="rate_05">0.5 mcg/kg/min only</button><button type="button" class="induction-btn" data-induction-mode="rate_10">1.0 mcg/kg/min only</button><button type="button" class="induction-btn active" data-induction-mode="normalized_combined">Combined, normalized to 1.0</button><span class="induction-note" id="inductionNote"></span></div>
 <section id="distributionPanel" class="panel active"><div class="controls"><label>View</label><select id="histView"></select><label>Band</label><select id="histBand"><option>delta</option><option>beta</option><option>gamma</option></select><label>Bin width</label><input id="binWidth" type="range" min="1" max="30" value="5" step=".5"><span id="binLabel"></span></div><div class="card"><h2 id="histTitle"></h2><div class="legend" id="histLegend"></div><div class="stats" id="histStats"></div><svg id="histSvg" viewBox="0 0 1280 650"></svg></div></section>
 <section id="trajectoriesPanel" class="panel"><div class="controls"><label>Patient</label><select id="trajPatient"></select><label>Band</label><select id="trajBand"><option>delta</option><option>beta</option><option>gamma</option></select><div class="subtabs" id="channelGroupTabs"><button type="button" class="subtab active" data-group="mixed">Mixed</button><button type="button" class="subtab" data-group="implanted">Implanted</button><button type="button" class="subtab" data-group="scalp">Scalp</button></div><label><input id="extendedWindow" type="checkbox"> Extended PCA window</label><div class="toggle-row"><label><input id="showMean" type="checkbox" checked> Mean</label><label><input id="showPc1" type="checkbox" checked> PC1</label><label><input id="showPc2" type="checkbox"> PC2</label><label><input id="showPc3" type="checkbox"> PC3</label></div></div><div class="card"><h2 id="trajTitle"></h2><p class="muted" id="trajSubtitle"></p><div class="legend" id="trajLegend"></div><div id="trajHoverInfo" class="trajectory-hover-info" aria-live="polite"><strong>Electrode information</strong><span>Hover over an electrode trajectory to display its identity, localization, and PCA metrics here.</span></div><svg id="trajSvg" viewBox="0 0 1280 680"></svg></div></section>
 <section id="embeddingPanel" class="panel"><div class="controls"><label>Patient scope</label><select id="embedPatient"></select><label>Band</label><select id="embedBand"><option>delta</option><option>beta</option><option>gamma</option></select><div class="subtabs" id="embedChannelGroupTabs"><button type="button" class="subtab active" data-group="mixed">Mixed</button><button type="button" class="subtab" data-group="implanted">Implanted</button><button type="button" class="subtab" data-group="scalp">Scalp</button></div><label>PCA window</label><div class="subtabs" id="embedTimeModeTabs"><button type="button" class="subtab active" data-mode="analysis_window">Standard PCA window</button><button type="button" class="subtab" data-mode="full_recording">Full recording PCA</button></div><label>Color by</label><select id="embedColorBy"></select><label>Point size</label><select id="embedSizeBy"></select><div class="toggle-row"><label><input id="embedShowPc1" type="checkbox" checked> PC1</label><label><input id="embedShowPc2" type="checkbox" checked> PC2</label><label><input id="embedShowPc3" type="checkbox" checked> PC3</label></div></div><div class="card"><h2 id="embedTitle"></h2><p class="muted" id="embedSubtitle"></p><div class="stats" id="embedStats"></div><p id="embedMetricHelp" class="metric-help"></p><div id="embeddingEmpty" class="embedding-empty" style="display:none"></div><div id="embeddingPlot" class="plot-host"></div></div></section>
-<section id="correlationsPanel" class="panel"><div class="card"><h2>Correlations</h2><div class="scroll"><div class="correlation-variant" data-induction-mode="rate_05" hidden><img class="corr-image" src="intracranial_correlation_grid_rate_05.svg" alt="Intracranial correlation grid - 0.5 mcg/kg/min"></div><div class="correlation-variant" data-induction-mode="rate_10" hidden><img class="corr-image" src="intracranial_correlation_grid_rate_10.svg" alt="Intracranial correlation grid - 1.0 mcg/kg/min"></div><div class="correlation-variant" data-induction-mode="normalized_combined"><img class="corr-image" src="intracranial_correlation_grid.svg" alt="Intracranial correlation grid - Combined, normalized to 1.0"></div></div></div></section>
+<section id="correlationsPanel" class="panel"><div class="card"><h2>Correlations</h2><div class="scroll"><div class="correlation-variant" data-induction-mode="rate_05" hidden><img class="corr-image" src="intracranial_correlation_grid_rate_05.svg?v=b1c7771b1281" alt="Intracranial correlation grid - 0.5 mcg/kg/min"></div><div class="correlation-variant" data-induction-mode="rate_10" hidden><img class="corr-image" src="intracranial_correlation_grid_rate_10.svg?v=b1c7771b1281" alt="Intracranial correlation grid - 1.0 mcg/kg/min"></div><div class="correlation-variant" data-induction-mode="normalized_combined"><img class="corr-image" src="intracranial_correlation_grid.svg?v=b1c7771b1281" alt="Intracranial correlation grid - Combined, normalized to 1.0"></div></div></div></section>
 </main><div id="tooltip" class="tooltip"></div><script>
 </script>
-<script src="assets/dashboard-data.js"></script>
-<script src="assets/trajectories/p1001-01.js"></script>
-<script src="assets/trajectories/p1002-01.js"></script>
-<script src="assets/trajectories/p1003-01.js"></script>
-<script src="assets/trajectories/p1004-01.js"></script>
-<script src="assets/trajectories/p1005-01.js"></script>
-<script src="assets/trajectories/p1006-01.js"></script>
-<script src="assets/trajectories/p1007-01.js"></script>
-<script src="assets/trajectories/p1008-01.js"></script>
-<script src="assets/trajectories/p1009-01.js"></script>
-<script src="assets/trajectories/p1010-01.js"></script>
-<script src="assets/trajectories/p1011-01.js"></script>
-<script src="assets/trajectories/p1012-01.js"></script>
-<script src="assets/trajectories/p1013-01.js"></script>
-<script src="assets/trajectories/p1014-01.js"></script>
-<script src="assets/trajectories/p1015-01.js"></script>
-<script src="assets/trajectories/p1016-01.js"></script>
-<script src="assets/trajectories/p1017-01.js"></script>
-<script src="assets/trajectories/p1018-01.js"></script>
-<script src="assets/trajectories/p1019-01.js"></script>
-<script src="assets/trajectories/p1020-01.js"></script>
-<script src="assets/trajectories/p1021-01.js"></script>
+<script src="assets/dashboard-data.js?v=b1c7771b1281"></script>
+<script src="assets/trajectories/p1001-01.js?v=b1c7771b1281"></script>
+<script src="assets/trajectories/p1002-01.js?v=b1c7771b1281"></script>
+<script src="assets/trajectories/p1003-01.js?v=b1c7771b1281"></script>
+<script src="assets/trajectories/p1004-01.js?v=b1c7771b1281"></script>
+<script src="assets/trajectories/p1005-01.js?v=b1c7771b1281"></script>
+<script src="assets/trajectories/p1006-01.js?v=b1c7771b1281"></script>
+<script src="assets/trajectories/p1007-01.js?v=b1c7771b1281"></script>
+<script src="assets/trajectories/p1008-01.js?v=b1c7771b1281"></script>
+<script src="assets/trajectories/p1009-01.js?v=b1c7771b1281"></script>
+<script src="assets/trajectories/p1010-01.js?v=b1c7771b1281"></script>
+<script src="assets/trajectories/p1011-01.js?v=b1c7771b1281"></script>
+<script src="assets/trajectories/p1012-01.js?v=b1c7771b1281"></script>
+<script src="assets/trajectories/p1013-01.js?v=b1c7771b1281"></script>
+<script src="assets/trajectories/p1014-01.js?v=b1c7771b1281"></script>
+<script src="assets/trajectories/p1015-01.js?v=b1c7771b1281"></script>
+<script src="assets/trajectories/p1016-01.js?v=b1c7771b1281"></script>
+<script src="assets/trajectories/p1017-01.js?v=b1c7771b1281"></script>
+<script src="assets/trajectories/p1018-01.js?v=b1c7771b1281"></script>
+<script src="assets/trajectories/p1019-01.js?v=b1c7771b1281"></script>
+<script src="assets/trajectories/p1020-01.js?v=b1c7771b1281"></script>
+<script src="assets/trajectories/p1021-01.js?v=b1c7771b1281"></script>
 <script>
 const entries=window.__DASHBOARD_ENTRIES__;
 const trajectories=window.__DASHBOARD_TRAJECTORIES__;
